@@ -1,0 +1,23 @@
+{
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "text": {
+        "type": "text"
+      },
+      "created_at": {
+        "type": "date",
+        "format": "epoch_second"
+      },
+      "coordinates": {
+        "type": "geo_shape"
+      }
+    }
+  },
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  }
+}
