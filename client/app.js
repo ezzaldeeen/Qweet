@@ -10,8 +10,7 @@ const lat = 52.22977;
 const lon = 21.01178;
 // calling map
 const map = L.map("map", config).setView([lat, lon], zoom);
-var markers = L.layerGroup()
-// Used to load and display tile layers on the map
+var markerLayer = L.layerGroup()
 // Most tile servers require attribution, which you can set under `Layer`
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -27,27 +26,38 @@ input.addEventListener('input', func)
 
 function func() {
     // make sure that the map has no markers
-    map.removeLayer(markers)
+    map.removeLayer(markerLayer)
     const text = document.getElementById("search-bar").value
     // preform request to ES
-    const coordinates = tweets.map(elmt => elmt['_source'])
-    if (coordinates) {
-        renderMarker(coordinates)
+    const tweets = docs.map(doc => doc['_source'])
+    if (text === "fire") {
+        renderMarker(tweets)
     }
 }
 
-function renderMarker(coordinates) {
-    // todo: rename coordinates since you get documents not coords
-    const marker = coordinates.map(function (coordinate) {
-        return L.marker(coordinate['coordinates']['coordinates']).bindPopup(coordinate['text'])
-    })
-    markers = L.layerGroup(marker)
-    map.addLayer(markers)
+function renderMarker(tweets) {
+    // todo: rename coordinates since you get documents not coords`
+    const markers = tweets.map(createMarkerWithPopup)
+    markerLayer = L.layerGroup(markers)
+    map.addLayer(markerLayer)
     map.flyTo([52.22500698, 0.13429814])
 }
 
+function createMarkerWithPopup(tweet) {
+    const coords = tweet['coordinates']['coordinates']
+    const text = tweet['text']
+    return L.marker(coords).bindPopup(text)
+}
 
-tweets = [
+
+/* TODOs
+
+    - function for flyTo - change the view of the map based on the give coords
+    - change marker icons
+    - add more tile layers
+*/
+
+docs = [
             {
                 "_index": "tweets",
                 "_id": "gKKMhIQBkSr8PUpYs2yb",
@@ -100,8 +110,8 @@ tweets = [
                     "coordinates": {
                         "type": "Point",
                         "coordinates": [
-                            52.21400698,
-                            0.12329814
+                            52.11400698,
+                            0.2329814
                         ]
                     },
                     "contributors": null,
