@@ -36,8 +36,3 @@ def get_tweets(tweet: TweetReq, res_model: Response) -> dict:
             "msg": "There's no connection with the Elasticsearch",
             "err": str(error)
         }
-
-
-@router.get("", status_code=status.HTTP_200_OK)
-def get_norm() -> dict:
-    return "hello"

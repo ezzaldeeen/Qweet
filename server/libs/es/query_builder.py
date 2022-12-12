@@ -30,5 +30,8 @@ def build_search_query(tweet: TweetReq) -> dict:
         range_date_clause,
         geo_bounding_box_clause
     ]).to_dict()
+    # pagination
+    # todo: hard coded!!!
+    generated_query['size'] = 1000
 
     return generated_query
