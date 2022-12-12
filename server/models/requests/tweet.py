@@ -17,5 +17,5 @@ class TweetReq(BaseModel):
     top_left_lon: Optional[float] = -180
     bottom_right_lat: Optional[float] = -90
     bottom_right_lon: Optional[float] = 180
-    start_at: Optional[str] = "2013-09-08T10:45:32.038Z"
-    end_at: Optional[str] = "2013-12-30T20:47:46.019Z"
+    start_at: Optional[str] = "2000-09-08T10:45:32.038Z"
+    end_at: Optional[str] = "2022-12-30T20:47:46.019Z"
