@@ -1,6 +1,6 @@
 // base map's configuration
 let config = {
-    minZoom: 5,
+    minZoom: 4,
     maxZoom: 18,
 };
 
@@ -32,12 +32,13 @@ let heatLayer = L.heatLayer([],
 // in order to do a request to the server on these two events
 const btn = document.getElementById('search-button');
 btn.addEventListener('click', process);
+
 const input = document.getElementById('search-bar');
 input.addEventListener('input', process)
 
 // here
 const endpointPath = "http://localhost:8000/v1/tweets"
-const payload = {
+const payload_temp = {
     text: "a",
     // top_left_lat: 40.73,
     // top_left_lon: -108.35883,
@@ -47,35 +48,79 @@ const payload = {
     // end_at: "2013-12-30T20:47:46.019Z",
 }
 
-function process() {
-    // hit
-    // getTweets(endpointPath, payload);
+async function process() {
     // make sure that the map has no markers
     map.removeLayer(markerLayer)
+
+    // getting the search query
     const text = document.getElementById("search-bar").value
-    // preform request to ES
-    const tweets = docs.map(doc => doc['_source'])
-    if (text === "fire") {
-        renderMarker(tweets)
+
+    // todo: get required coordinates
+    const payload = {
+        text: text
+    }
+
+    const response = await getTweets(endpointPath, payload);
+    const hits = response['response']['hits']['hits']
+
+    const tweets = hits.map(hit => {
+        return { 
+            source: hit['_source'],
+            score: hit['_score']
+        }
+    })
+
+    if (tweets.length > 0) {
+        renderHeatLayer(tweets)
+        renderMarker(hits)
+        flyToDensity(hits)
     }
 }
 
-function renderMarker(tweets) {
-    // todo: rename coordinates since you get documents not coords`
-    const markers = tweets.map(createMarkerWithPopup)
+function renderHeatLayer(tweets) {
+    // getting the coordinates, and scores of the tweets
+    // to render the heatmap based on the given scores
+    const coordsWithIntensity = tweets.map(tweet => {
+        const [lon, lat] = tweet['source']['coordinates']['coordinates']
+        const score = tweet['score']
+        return [lat, lon, score / 10]
+    })
+    heatLayer.setLatLngs(coordsWithIntensity)
+}
+
+function renderMarker(hits) {
+    const sources = hits.map(hit => hit['_source'])
+    const markers = sources.map(createMarkerWithPopup)
     markerLayer = L.layerGroup(markers)
-    map.addLayer(markerLayer)
-    map.flyTo([52.22500698, 0.13429814])
+    map.addLayer(markerLayer);
 }
 
 function createMarkerWithPopup(tweet) {
-    const coords = tweet['coordinates']['coordinates']
+    const [lon, lat] = tweet['coordinates']['coordinates']
     const text = tweet['text']
-    return L.marker(coords).bindPopup(text)
+    return L.marker([lat, lon]).bindPopup(text)
 }
 
-function getTweets(url, payload) {
-    fetch(url, {
+function flyToDensity(hits) {
+    const lons = hits.map(hit => {
+        return hit['_source']['coordinates']['coordinates'][0]
+    })
+
+    const lats = hits.map(hit => {
+        return hit['_source']['coordinates']['coordinates'][1]
+    })
+
+    const lonSum = lons.reduce((a, b) => { return a + b})
+    const latSum = lats.reduce((a, b) => { return a + b})
+
+    const lon = lonSum / lons.length
+    const lat = latSum / lats.length
+
+    map.flyTo([lat, lon])
+}
+
+async function getTweets(url, payload) {
+    const response = await fetch(url, {
         method: 'POST',
         body: JSON.stringify(payload),
         headers: new Headers({
@@ -83,7 +128,8 @@ function getTweets(url, payload) {
         }),
     })
         .then((response) => response.json())
-        .then((json) => console.log(json));
+
+    return response
 }
 
 
