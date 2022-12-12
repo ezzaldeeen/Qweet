@@ -1,8 +1,9 @@
 from typing import Callable, Any
 
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, exceptions
 
 from models.requests.tweet import TweetReq
+from libs.es.query_builder import build_search_query
 
 
 class TweetRepo:
@@ -32,11 +33,13 @@ class TweetRepo:
         # open new connection with ES
         conn = self.__get_connection()
         try:
+            generated_query = build_search_query(tweet)
             response = conn.search(index=self.__es_index,
-                                   body={})
+                                   body=generated_query)
             return response
-        except Exception as error:
-            pass
+
+        except exceptions.ConnectionError as error:
+            raise error
 
         finally:
             # close ES connection
