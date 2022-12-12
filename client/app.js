@@ -1,30 +1,41 @@
-// config map
+// map's configuration
 let config = {
     minZoom: 5,
     maxZoom: 18,
   };
-// magnification with which the map will start
+// map's view settings
 const zoom = 5;
-// co-ordinates
 const lat = 52.22977;
 const lon = 21.01178;
-// calling map
+// render the map canvas
 const map = L.map("map", config).setView([lat, lon], zoom);
+// layers of marker (tweets marker)
 var markerLayer = L.layerGroup()
-// Most tile servers require attribution, which you can set under `Layer`
+// adding tile layer to the map
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 }).addTo(map);
-
-
+// event listeners
 const btn = document.getElementById('search-button');
-btn.addEventListener('click', func);
-
+btn.addEventListener('click', process);
 const input = document.getElementById('search-bar');
-input.addEventListener('input', func)
+input.addEventListener('input', process)
 
+// here
+const endpointPath = "http://localhost:8000/v1/tweets"
+const payload = {
+    text: "fire",
+    top_left_lat: 40.73,
+    top_left_lon: -108.35883,
+    bottom_right_lat: 40.01,
+    bottom_right_lon: -101.31067,
+    start_at: "2013-09-08T10:45:32.038Z",
+    end_at: "2013-12-30T20:47:46.019Z",
+  }
 
-function func() {
+function process() {
+    // hit
+    postData(endpointPath, payload);
     // make sure that the map has no markers
     map.removeLayer(markerLayer)
     const text = document.getElementById("search-bar").value
@@ -49,6 +60,17 @@ function createMarkerWithPopup(tweet) {
     return L.marker(coords).bindPopup(text)
 }
 
+function getTweets(url, payload) {
+    fetch(url, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: new Headers({
+        'Content-Type': 'application/json; charset=UTF-8',
+    }),
+    })
+    .then((response) => response.json())
+    .then((json) => console.log(json));
+  }
 
 /* TODOs
 
