@@ -49,7 +49,7 @@ const payload_temp = {
 }
 
 async function process() {
-    // make sure that the map has no markers
+    // make sure that the map canvas has no markers
     map.removeLayer(markerLayer)
 
     // getting the search query
@@ -59,20 +59,20 @@ async function process() {
     const payload = {
         text: text
     }
-
+    // getting hits of the server response
     const response = await getTweets(endpointPath, payload);
     const hits = response['response']['hits']['hits']
-
+    // transform the hits into tweets with their source, and scores
     const tweets = hits.map(hit => {
         return { 
             source: hit['_source'],
             score: hit['_score']
         }
     })
-
+    // if there's a tweets matches the query
     if (tweets.length > 0) {
         renderHeatLayer(tweets)
-        renderMarker(hits)
+        renderMarker(tweets)
         flyToDensity(hits)
     }
 }
@@ -85,34 +85,41 @@ function renderHeatLayer(tweets) {
         const score = tweet['score']
         return [lat, lon, score / 10]
     })
+    // create new heatmap layer based on the coords and intensity
     heatLayer.setLatLngs(coordsWithIntensity)
 }
 
-function renderMarker(hits) {
-    const sources = hits.map(hit => hit['_source'])
+function renderMarker(tweets) {
+    // getting tweets' (hits) sources
+    const sources = tweets.map(tweet => tweet['source'])
+    // creating marker with popup with text
     const markers = sources.map(createMarkerWithPopup)
+    // injecting markers to a layer group and add it to map canvas
     markerLayer = L.layerGroup(markers)
     map.addLayer(markerLayer);
 }
 
-function createMarkerWithPopup(tweet) {
-    const [lon, lat] = tweet['coordinates']['coordinates']
-    const text = tweet['text']
+function createMarkerWithPopup(source) {
+    // getting tweet's coordinates and text
+    const [lon, lat] = source['coordinates']['coordinates']
+    const text = source['text']
+    // create a marker based on the given coords and text
     return L.marker([lat, lon]).bindPopup(text)
 }
 
-function flyToDensity(hits) {
-    const lons = hits.map(hit => {
-        return hit['_source']['coordinates']['coordinates'][0]
+function flyToDensity(tweets) {
+    // getting longitudes for all tweets
+    const lons = tweets.map(tweet => {
+        return tweet['source']['coordinates']['coordinates'][0]
     })
-
-    const lats = hits.map(hit => {
-        return hit['_source']['coordinates']['coordinates'][1]
+    // getting latitudes for all tweets
+    const lats = tweets.map(tweet => {
+        return tweet['_source']['coordinates']['coordinates'][1]
     })
-
+    // compute the sum for both lon, and lat
     const lonSum = lons.reduce((a, b) => { return a + b})
     const latSum = lats.reduce((a, b) => { return a + b})
-
+    // getting the mean of lat, and lon in order to change the map's view
     const lon = lonSum / lons.length
     const lat = latSum / lats.length
 
@@ -120,6 +127,7 @@ function flyToDensity(hits) {
 }
 
 async function getTweets(url, payload) {
+    // getting tweets based on the given payload
     const response = await fetch(url, {
         method: 'POST',
         body: JSON.stringify(payload),
