@@ -1,7 +1,7 @@
 // base map's configuration
 let config = {
     minZoom: 4,
-    maxZoom: 18,
+    maxZoom: 18
 };
 
 // base settings for map's view
@@ -19,6 +19,47 @@ var markerLayer = L.layerGroup()
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 }).addTo(map);
+
+// adding an empty drawing layer
+let editableLayers = new L.FeatureGroup();
+map.addLayer(editableLayers);
+
+console.log(editableLayers)
+
+
+function drawBoundingBox() {
+    let options = {
+        position: 'topright',
+        draw: {
+            polyline: false,
+            marker: false,
+            polygon: false,
+            circle: false,
+            rectangle: {
+                shapeOptions: {
+                    clickable: false,
+                    color: '#f357a1',
+                    weight: 5
+                }
+            }
+        },
+        edit: {
+            featureGroup: editableLayers,
+            remove: true,
+            edit: true
+        }
+    };
+
+    let drawControl = new L.Control.Draw(options);
+    map.addControl(drawControl);
+
+    map.on(L.Draw.Event.CREATED, function (e) {
+        const layer = e.layer;
+        editableLayers.addLayer(layer);
+    });
+}
+
+drawBoundingBox()
 
 // adding an empty heatmap layer with base options
 let heatLayer = L.heatLayer([],
@@ -73,7 +114,7 @@ async function process() {
     if (tweets.length > 0) {
         renderHeatLayer(tweets)
         renderMarker(tweets)
-        flyToDensity(hits)
+        flyToDensity(tweets)
     }
 }
 
@@ -114,7 +155,7 @@ function flyToDensity(tweets) {
     })
     // getting latitudes for all tweets
     const lats = tweets.map(tweet => {
-        return tweet['_source']['coordinates']['coordinates'][1]
+        return tweet['source']['coordinates']['coordinates'][1]
     })
     // compute the sum for both lon, and lat
     const lonSum = lons.reduce((a, b) => { return a + b})
