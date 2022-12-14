@@ -24,10 +24,9 @@ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
 let editableLayers = new L.FeatureGroup();
 map.addLayer(editableLayers);
 
-console.log(editableLayers)
+let boundingBoxCoords;
 
-
-function drawBoundingBox() {
+function renerToolDrawBar() {
     let options = {
         position: 'topright',
         draw: {
@@ -45,21 +44,27 @@ function drawBoundingBox() {
         },
         edit: {
             featureGroup: editableLayers,
-            remove: true,
-            edit: true
+            remove: false,
+            edit: false
         }
     };
 
     let drawControl = new L.Control.Draw(options);
     map.addControl(drawControl);
 
+    // getting coordinates
+    let layer;
     map.on(L.Draw.Event.CREATED, function (e) {
-        const layer = e.layer;
+        if (layer) {
+            editableLayers.removeLayer(layer);
+        }
+        layer = e.layer;
         editableLayers.addLayer(layer);
+        boundingBoxCoords = layer._latlngs[0]
     });
 }
 
-drawBoundingBox()
+renerToolDrawBar()
 
 // adding an empty heatmap layer with base options
 let heatLayer = L.heatLayer([],
@@ -93,16 +98,35 @@ async function process() {
     // make sure that the map canvas has no markers
     map.removeLayer(markerLayer)
 
-    // getting the search query
+    // getting the text field
     const text = document.getElementById("search-bar").value
+
+    // setting the base coordinates for the bounding box
+    let top_left_lat = 90
+    let top_left_lon = -180
+    let bottom_right_lat = -90
+    let bottom_right_lon = 180
+
+    if (boundingBoxCoords) {
+        // getting coordinates from the bounding box
+        top_left_lat = boundingBoxCoords[1].lat
+        top_left_lon = boundingBoxCoords[1].lng
+        bottom_right_lat = boundingBoxCoords[3].lat
+        bottom_right_lon = boundingBoxCoords[3].lng   
+    }
 
     // todo: get required coordinates
     const payload = {
-        text: text
+        text: text,
+        top_left_lat: top_left_lat,
+        top_left_lon: top_left_lon,
+        bottom_right_lat: bottom_right_lat,
+        bottom_right_lon: bottom_right_lon
     }
     // getting hits of the server response
     const response = await getTweets(endpointPath, payload);
     const hits = response['response']['hits']['hits']
+    console.log(hits.length)
     // transform the hits into tweets with their source, and scores
     const tweets = hits.map(hit => {
         return { 
@@ -180,73 +204,3 @@ async function getTweets(url, payload) {
 
     return response
 }
-
-
-docs = [
-    {
-        "_index": "tweets",
-        "_id": "gKKMhIQBkSr8PUpYs2yb",
-        "_score": 1.0,
-        "_source": {
-            "created_at": 1388474062.0,
-            "id": 417916626596806656,
-            "id_str": "417916626596806656",
-            "text": "Boom bitch get out the way! #drunk #islands #girlsnight  #BJs #hookah #zephyrs #boulder #marines… http://t.co/uYmu7c4o0x",
-            "truncated": false,
-            "source": "<a href=\"http://instagram.com\" rel=\"nofollow\">Instagram</a>",
-            "in_reply_to_status_id": null,
-            "in_reply_to_status_id_str": null,
-            "in_reply_to_user_id": null,
-            "in_reply_to_user_id_str": null,
-            "in_reply_to_screen_name": null,
-            "coordinates": {
-                "type": "Point",
-                "coordinates": [
-                    52.22500698,
-                    0.13429814
-                ]
-            },
-            "contributors": null,
-            "is_quote_status": false,
-            "retweet_count": 0,
-            "favorite_count": 0,
-            "favorited": false,
-            "retweeted": false,
-            "possibly_sensitive": false,
-            "lang": "en"
-        }
-    },
-    {
-        "_index": "tweets",
-        "_id": "gKKMhIQBkSr8PUpYs2yb",
-        "_score": 1.0,
-        "_source": {
-            "created_at": 1388474062.0,
-            "id": 417916626596806656,
-            "id_str": "417916626596806656",
-            "text": "Boom bitch get out the way! #drunk #islands #girlsnight  #BJs #hookah #zephyrs #boulder #marines… http://t.co/uYmu7c4o0x",
-            "truncated": false,
-            "source": "<a href=\"http://instagram.com\" rel=\"nofollow\">Instagram</a>",
-            "in_reply_to_status_id": null,
-            "in_reply_to_status_id_str": null,
-            "in_reply_to_user_id": null,
-            "in_reply_to_user_id_str": null,
-            "in_reply_to_screen_name": null,
-            "coordinates": {
-                "type": "Point",
-                "coordinates": [
-                    52.11400698,
-                    0.2329814
-                ]
-            },
-            "contributors": null,
-            "is_quote_status": false,
-            "retweet_count": 0,
-            "favorite_count": 0,
-            "favorited": false,
-            "retweeted": false,
-            "possibly_sensitive": false,
-            "lang": "en"
-        }
-    }
-]
