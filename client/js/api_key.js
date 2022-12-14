@@ -1,0 +1,1 @@
+export const TWITTER_SERVICE_GET_ENDPOINT = "http://localhost:8000/v1/tweets";

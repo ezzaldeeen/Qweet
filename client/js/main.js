@@ -1,70 +1,27 @@
-// base map's configuration
-let config = {
-    minZoom: 4,
-    maxZoom: 18
-};
+import { TWITTER_SERVICE_GET_ENDPOINT } from "./api_key.js";
+import { 
+    getDrawConrolOptions } from "./draw_control.js";
+import { 
+    BASE_VIEW_SETTINGS,
+    BASE_MAP_CONFIG,
+    BASE_TILE_LAYER } from "./map_config.js";
 
-// base settings for map's view
-const zoom = 5;
-const lat = 52.22977;
-const lon = 21.01178;
-
-// instanitaite the map canvas
-const map = L.map("map", config).setView([lat, lon], zoom);
-
-// instanitate marker layer in order to mark the tweets on the map canvas
-var markerLayer = L.layerGroup()
-
-// adding a tilelayer to the map canvas
-L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-}).addTo(map);
-
-// adding an empty drawing layer
+// create the map canvas based on the given
+// configuration and the view settings
+const map = L.map("map", BASE_MAP_CONFIG)
+             .setView([BASE_VIEW_SETTINGS.lat,
+                       BASE_VIEW_SETTINGS.lon], BASE_VIEW_SETTINGS.zoom);
+// adding the osm tilelayer to the map canvas
+L.tileLayer(BASE_TILE_LAYER.uri, BASE_TILE_LAYER.att).addTo(map);
+// create layer group in order to hold the markers
+let markerLayer = L.layerGroup()
+// create feature group in order to hold the rectangles
 let editableLayers = new L.FeatureGroup();
 map.addLayer(editableLayers);
-
+// in order to hold the last coordinates of bounding box
 let boundingBoxCoords;
 
-function renerToolDrawBar() {
-    let options = {
-        position: 'topright',
-        draw: {
-            polyline: false,
-            marker: false,
-            polygon: false,
-            circle: false,
-            rectangle: {
-                shapeOptions: {
-                    clickable: false,
-                    color: '#f357a1',
-                    weight: 5
-                }
-            }
-        },
-        edit: {
-            featureGroup: editableLayers,
-            remove: false,
-            edit: false
-        }
-    };
-
-    let drawControl = new L.Control.Draw(options);
-    map.addControl(drawControl);
-
-    // getting coordinates
-    let layer;
-    map.on(L.Draw.Event.CREATED, function (e) {
-        if (layer) {
-            editableLayers.removeLayer(layer);
-        }
-        layer = e.layer;
-        editableLayers.addLayer(layer);
-        boundingBoxCoords = layer._latlngs[0]
-    });
-}
-
-renerToolDrawBar()
+createDrawConrtol()
 
 // adding an empty heatmap layer with base options
 let heatLayer = L.heatLayer([],
@@ -82,22 +39,9 @@ btn.addEventListener('click', process);
 const input = document.getElementById('search-bar');
 input.addEventListener('input', process)
 
-// here
-const endpointPath = "http://localhost:8000/v1/tweets"
-const payload_temp = {
-    text: "a",
-    // top_left_lat: 40.73,
-    // top_left_lon: -108.35883,
-    // bottom_right_lat: 40.01,
-    // bottom_right_lon: -101.31067,
-    // start_at: "2013-09-08T10:45:32.038Z",
-    // end_at: "2013-12-30T20:47:46.019Z",
-}
-
 async function process() {
     // make sure that the map canvas has no markers
     map.removeLayer(markerLayer)
-
     // getting the text field
     const text = document.getElementById("search-bar").value
 
@@ -124,7 +68,7 @@ async function process() {
         bottom_right_lon: bottom_right_lon
     }
     // getting hits of the server response
-    const response = await getTweets(endpointPath, payload);
+    const response = await getTweets(TWITTER_SERVICE_GET_ENDPOINT, payload);
     const hits = response['response']['hits']['hits']
     console.log(hits.length)
     // transform the hits into tweets with their source, and scores
@@ -136,9 +80,9 @@ async function process() {
     })
     // if there's a tweets matches the query
     if (tweets.length > 0) {
-        renderHeatLayer(tweets)
-        renderMarker(tweets)
-        flyToDensity(tweets)
+        renderHeatLayer(tweets, heatLayer)
+        renderMarker(tweets, markerLayer, map)
+        flyToDensity(tweets, map)
     }
 }
 
@@ -189,6 +133,24 @@ function flyToDensity(tweets) {
     const lat = latSum / lats.length
 
     map.flyTo([lat, lon])
+}
+
+function createDrawConrtol() {
+
+    const drawControlOptions = getDrawConrolOptions(editableLayers)
+    let drawControl = new L.Control.Draw(drawControlOptions);
+    map.addControl(drawControl);
+
+    // getting coordinates
+    let layer;
+    map.on(L.Draw.Event.CREATED, function (e) {
+        if (layer) {
+            editableLayers.removeLayer(layer);
+        }
+        layer = e.layer;
+        editableLayers.addLayer(layer);
+        boundingBoxCoords = layer._latlngs[0]
+    });
 }
 
 async function getTweets(url, payload) {
