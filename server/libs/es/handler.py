@@ -62,9 +62,9 @@ class Handler:
             )
             return
 
-        except exceptions.BadRequestError as exception:
-            self.__logger.error(exception.message)
-            return
+        # except exceptions.BadRequestError as exception:
+        #     self.__logger.error(exception.message)
+        #     return
 
         except IOError as exception:
             self.__logger.error(exception)

@@ -16,7 +16,8 @@ from utils.config import AppConfig
 @click.option('--shard', '-s', default=1, type=int, help='Number of Shards')
 @click.option('--replica', '-r', default=0, type=int, help='Number of Replicas')
 @click.option('--file', '-f', type=click.Path(exists=True), help='Path of Mapping file')
-def create_new_index(index: str, shard: int, replica: int, file: str) -> None:
+@click.option('--data', '-d', type=click.Path(exists=True), help='Path of data file')
+def create_new_index(index: str, shard: int, replica: int, file: str, data: str) -> None:
     """
     Create new Elasticsearch index with the given settings, and mapping
     Args:
@@ -24,6 +25,7 @@ def create_new_index(index: str, shard: int, replica: int, file: str) -> None:
         - shard: [int] number of shards
         - replica: [int] number of replicas
         - file: [path] path of the mapping file
+        - data: [path] path of the data file
     Example:
         - python es.py -i tweets -s 1 -r 0 -f <relative/path/to/file_xxx.tmpl>
     """
@@ -42,7 +44,9 @@ def create_new_index(index: str, shard: int, replica: int, file: str) -> None:
         logging.basicConfig(level=config.log_level)
         logger = logging.getLogger()
 
-        es_client = Elasticsearch(hosts=config.db_host)
+        es_client = Elasticsearch(hosts=config.db_host,
+                                  http_auth=("elastic", config.db_pass),
+                                  timeout=30)
         handler = Handler(index=index, client=es_client, logger=logger)
 
         with open(file) as file_:
@@ -51,8 +55,10 @@ def create_new_index(index: str, shard: int, replica: int, file: str) -> None:
         # set the args to the mappings
         body['settings']['number_of_shards'] = shard
         body['settings']['number_of_replicas'] = replica
-
+        # create new index
         handler.create(body=body)
+        # bulk insertion
+        handler.index(collection_path=data)
 
     except exceptions.ConnectionError:
         click.echo("there's no connection with the elasticsearch")

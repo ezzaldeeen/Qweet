@@ -2,7 +2,6 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-
 from utils.config import AppConfig
 from routes import tweets
 
@@ -23,4 +22,4 @@ config = AppConfig.instance()
 app.include_router(router=tweets.router)
 
 if __name__ == '__main__':
-    uvicorn.run(app, port=config.svc_port)
+    uvicorn.run(app, host="0.0.0.0", port=config.svc_port)

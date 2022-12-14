@@ -1,9 +1,10 @@
-from typing import Callable, Any
+from typing import Callable, Any, Tuple
 
 from elasticsearch import Elasticsearch, exceptions
 
 from models.requests.tweet import TweetReq
 from libs.es.query_builder import build_search_query
+from utils.config import AppConfig
 
 
 class TweetRepo:
@@ -12,9 +13,9 @@ class TweetRepo:
     with the Elasticsearch, and perform retrieve operations
     against the tweets index
     """
-    def __init__(self, es: Callable[[str], Any], db_host: str):
+    def __init__(self, es, config: AppConfig):
         self.__es = es
-        self.__db_host = db_host
+        self.__config = config
         self.__es_index = "tweets"
 
     def __get_connection(self) -> Elasticsearch:
@@ -22,7 +23,8 @@ class TweetRepo:
         Establish new Elasticsearch connection
         :return: [Elasticsearch] connection
         """
-        return self.__es(self.__db_host)
+        return self.__es(self.__config.db_host,
+                         http_auth=("elastic", self.__config.db_pass))
 
     def get(self, tweet: TweetReq) -> dict:
         """

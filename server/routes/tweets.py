@@ -10,7 +10,7 @@ router = APIRouter(prefix="/v1/tweets", tags=["tweets"])
 # getting app's configuration
 config = AppConfig.instance()
 # instantiate tweet repository
-tweets_repo = TweetRepo(Elasticsearch, config.db_host)
+tweets_repo = TweetRepo(Elasticsearch, config)
 
 
 @router.post("", status_code=status.HTTP_200_OK)

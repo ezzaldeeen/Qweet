@@ -12,7 +12,8 @@ class AppConfig:
             SVC_PORT: server port defaulted to the local one
         """
         self.db_host = config('DB_HOST', default='http://localhost:9200')
-        self.svc_port = config('SVC_PORT', default=8080, cast=int)
+        self.db_pass = config('DB_PASS', default='')
+        self.svc_port = config('PORT', default=8080, cast=int)
         self.log_level = config('LOGLEVEL', default='INFO', cast=str)
         self.__instance = self
 
