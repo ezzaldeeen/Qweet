@@ -6,7 +6,7 @@ The idea from this project is to index a continuous stream of Tweets into the El
 
 ## Infrastructure
 
-![Untitled](https://drive.google.com/file/d/1vPTaejz04yVefRgnMN8MC7IJKg6S5Au3/view)
+[![Untitled.png](https://i.postimg.cc/SK8H1vdh/Untitled.png)](https://postimg.cc/DWvC85Rj)
 
 ## Server-Side
 
@@ -24,4 +24,4 @@ The idea from this project is to index a continuous stream of Tweets into the El
 
 ## Screenshot
 
-![Untitled](QWEET%20-%20Exploratory%20Spatio-temporal%20Analysis%20of%20Tw%203dcb9627e1134ad1b7a6bd1ce9181212/Untitled%201.png)
+[![Untitled-1.png](https://i.postimg.cc/MpghDSy5/Untitled-1.png)](https://postimg.cc/G4J7L6gT)
