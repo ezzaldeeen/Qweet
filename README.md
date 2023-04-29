@@ -1,4 +1,4 @@
-# QWEET - Exploratory Spatio-temporal Analysis of Twitter Stream
+# Qweet - Exploratory Spatio-temporal Analysis of Twitter Stream
 
 ## Overview
 
